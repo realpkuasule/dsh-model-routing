@@ -24,9 +24,11 @@ ln -sfn "$PWD" ~/.agents/skills/dsh-model-routing
 
 ## 使用方式
 
-1. **会话启动前选路**：在新会话里描述任务并问"该用哪个模型/模式"，或输入 `/route`、说"帮我选路"。skill 按任务特质输出推荐报告。
-2. **自动写默认设置**：在报告后回复"写入默认设置"，skill 会 define/run 内嵌插件（`plugin-route-model.js`），先 dryRun 预览，确认后写入。影响之后新建的会话。
-3. **工作流分派**：写 workflow 脚本时按 SKILL.md 里的 `pickModel()` 规则给 `agent()` 传 provider/model 覆盖。
+1. **会话第一轮自动启动**：启用本技能的任何会话里，收到第一条用户消息即自动加载并执行选路判定（无需 `/route` 或"帮我选路"等话术）。非任务类消息（寒暄、闲聊、反问）自动保持安静，不输出报告。
+2. **得到选路报告**：任务消息触发后输出中文结构化推荐（模型 + 模式 + 理由 + 当前会话是否匹配 + 下一步）。
+3. **自动写默认设置**：在报告后回复"写入默认设置"，skill 会 define/run 内嵌插件（`plugin-route-model.js`），先 dryRun 预览，确认后写入。影响之后新建的会话。
+4. **工作流分派**：写 workflow 脚本时按 SKILL.md 里的 `pickModel()` 规则给 `agent()` 传 provider/model 覆盖。
+5. **中途显式触发**：会话中途问"该用哪个模型/模式"或 `/route`、`/model-route` 同样生效。
 
 ## 核心规则速览
 
