@@ -1,0 +1,2 @@
+name: 标准模式·自动选路
+description: 标准模式全部能力 + 会话第一轮自动执行模型/模式选路：首条任务消息即调用 dsh-model-routing skill 输出 pro/flash 与标准/PTC/极简/创造模式的推荐报告，闲聊消息不打扰。

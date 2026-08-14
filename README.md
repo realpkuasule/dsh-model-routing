@@ -8,6 +8,9 @@ DeepSeek Harness 模型与模式选路 Skill：按任务特质自动判定用 `d
 model-routing/
 ├── SKILL.md               # skill 主体：判定矩阵、选路流程、输出模板、插件用法
 ├── plugin-route-model.js  # 动态 Cordis 插件源码（Host 半身，随用随启）
+├── presets/
+│   └── routing-standard/  # 用户预设「标准模式·自动选路」：persona 强制首轮选路
+├── sync-skills            # 一键同步（GitHub ×2 + mbp/m2）
 └── README.md              # 本文件
 ```
 
@@ -24,11 +27,11 @@ ln -sfn "$PWD" ~/.agents/skills/dsh-model-routing
 
 ## 使用方式
 
-1. **会话第一轮自动启动**：启用本技能的任何会话里，收到第一条用户消息即自动加载并执行选路判定（无需 `/route` 或"帮我选路"等话术）。非任务类消息（寒暄、闲聊、反问）自动保持安静，不输出报告。
-2. **得到选路报告**：任务消息触发后输出中文结构化推荐（模型 + 模式 + 理由 + 当前会话是否匹配 + 下一步）。
-3. **自动写默认设置**：在报告后回复"写入默认设置"，skill 会 define/run 内嵌插件（`plugin-route-model.js`），先 dryRun 预览，确认后写入。影响之后新建的会话。
-4. **工作流分派**：写 workflow 脚本时按 SKILL.md 里的 `pickModel()` 规则给 `agent()` 传 provider/model 覆盖。
-5. **中途显式触发**：会话中途问"该用哪个模型/模式"或 `/route`、`/model-route` 同样生效。
+1. **（推荐）用「标准模式·自动选路」预设开会话**：该预设（见 `presets/README.md`）在 persona 里强制首轮选路——第一条任务消息即自动加载本 skill 输出选路报告，闲聊消息静默。安装后 Web GUI 的预设选择器里会出现「标准模式·自动选路」，无需重启。
+2. **其它预设下的触发**：skill description 要求"首轮必须加载"（尽力而为，模型可能忽略）；中途说"该用哪个模型/模式"、`/route`、`/model-route` 可靠触发。
+3. **得到选路报告**：中文结构化推荐（模型 + 模式 + 理由 + 当前会话是否匹配 + 下一步）。
+4. **自动写默认设置**：在报告后回复"写入默认设置"，skill 会 define/run 内嵌插件（`plugin-route-model.js`），先 dryRun 预览，确认后写入。影响之后新建的会话。
+5. **工作流分派**：写 workflow 脚本时按 SKILL.md 里的 `pickModel()` 规则给 `agent()` 传 provider/model 覆盖。
 
 ## 核心规则速览
 
