@@ -2,7 +2,9 @@
 # sync-skills — 一键同步 dsh-model-routing 到：
 #   1. GitHub 两个远端（realpkuasule / xiaozhiaixue）
 #   2. 本机用户级技能目录 ~/.agents/skills（软链，缺失时重建）
-#   3. mbp / m2 两台远程机器（rsync over SSH）
+#   3. mbp / m2 两台远程机器（rsync over SSH）：
+#      a. 技能目录 → ~/.agents/skills/dsh-model-routing
+#      b. routing-standard 预设 → ~/.dsh/.agent-presets/routing-standard
 #
 # 用法：
 #   ./sync-skills           # 完整同步
@@ -19,11 +21,25 @@ if [ "${1:-}" = "--dry-run" ] || [ "${1:-}" = "-n" ]; then
 fi
 
 GIT_REMOTES=(realpkuasule xiaozhiaixue)
-SSH_TARGETS=(
+SKILL_TARGETS=(
   "mbp:/Users/morgan/.agents/skills/dsh-model-routing/"
   "m2:/Users/gitlab/.agents/skills/dsh-model-routing/"
 )
+PRESET_TARGETS=(
+  "mbp:/Users/morgan/.dsh/.agent-presets/routing-standard/"
+  "m2:/Users/gitlab/.dsh/.agent-presets/routing-standard/"
+)
 RSYNC_OPTS=(-a --delete --exclude='.DS_Store')
+
+# 在远程机器上确保目录存在（rsync 2.6.9 无 --mkpath）
+ensure_remote_dir() {
+  local host="${1%%:*}" path="${1#*:}"
+  if [ "$DRY" = 1 ]; then
+    echo "[dry-run] ssh $host mkdir -p $path"
+    return 0
+  fi
+  ssh -o BatchMode=yes "$host" "mkdir -p '$path'"
+}
 
 # ── 0. 工作区状态提示 ──────────────────────────────────────────────
 DIRTY=$(git status --porcelain | wc -l | tr -d ' ')
@@ -59,13 +75,25 @@ else
   fi
 fi
 
-# ── 3. rsync 到远程机器 ────────────────────────────────────────────
-for target in "${SSH_TARGETS[@]}"; do
+# ── 3. rsync 技能目录到远程机器 ─────────────────────────────────────
+for target in "${SKILL_TARGETS[@]}"; do
   if [ "$DRY" = 1 ]; then
     echo "[dry-run] rsync ${RSYNC_OPTS[*]} $PWD/ $target"
   else
-    echo "== rsync → $target =="
+    echo "== rsync skill → $target =="
+    ensure_remote_dir "$target"
     rsync "${RSYNC_OPTS[@]}" "$PWD/" "$target"
+  fi
+done
+
+# ── 4. rsync routing-standard 预设到远程机器 ────────────────────────
+for target in "${PRESET_TARGETS[@]}"; do
+  if [ "$DRY" = 1 ]; then
+    echo "[dry-run] rsync ${RSYNC_OPTS[*]} $PWD/presets/routing-standard/ $target"
+  else
+    echo "== rsync preset → $target =="
+    ensure_remote_dir "$target"
+    rsync "${RSYNC_OPTS[@]}" "$PWD/presets/routing-standard/" "$target"
   fi
 done
 
@@ -73,5 +101,5 @@ echo
 if [ "$DRY" = 1 ]; then
   echo "（dry-run 完成，未做任何修改）"
 else
-  echo "✅ 全部同步完成：GitHub ×${#GIT_REMOTES[@]}、本机软链、远程机器 ×${#SSH_TARGETS[@]}"
+  echo "✅ 全部同步完成：GitHub ×${#GIT_REMOTES[@]}、本机软链、远程技能 ×${#SKILL_TARGETS[@]}、远程预设 ×${#PRESET_TARGETS[@]}"
 fi
