@@ -53,3 +53,20 @@ git add -A && git commit -m "feat: dsh-model-routing skill v1"
 git remote add origin <你的仓库地址>
 git push -u origin main
 ```
+
+## 一键同步（GitHub + mbp + m2）
+
+仓库自带 `sync-skills` 脚本，一次执行完成：
+
+1. 推送到 GitHub 两个远端（`realpkuasule` / `xiaozhiaixue`）
+2. 确保本机 `~/.agents/skills/dsh-model-routing` 软链存在
+3. rsync 到 `mbp`（/Users/morgan）与 `m2`（/Users/gitlab）的 `~/.agents/skills/dsh-model-routing`
+
+```bash
+./sync-skills            # 完整同步
+./sync-skills --dry-run  # 只打印动作不执行
+```
+
+- 全程走 SSH（`git@github.com` + 本机 `mpm_key`），不落凭据
+- 有未提交改动时会先提示：git push 只推送已提交内容，rsync 则同步工作区现状
+- 远端机器路径/账号变了，改脚本顶部的 `SSH_TARGETS` 数组即可

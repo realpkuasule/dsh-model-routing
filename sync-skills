@@ -1,0 +1,77 @@
+#!/usr/bin/env bash
+# sync-skills — 一键同步 dsh-model-routing 到：
+#   1. GitHub 两个远端（realpkuasule / xiaozhiaixue）
+#   2. 本机用户级技能目录 ~/.agents/skills（软链，缺失时重建）
+#   3. mbp / m2 两台远程机器（rsync over SSH）
+#
+# 用法：
+#   ./sync-skills           # 完整同步
+#   ./sync-skills --dry-run # 只打印将执行的动作，不实际执行
+#
+# 全部走 SSH（git@github.com / 本机 mpm_key），不在任何环节落凭据。
+
+set -euo pipefail
+cd "$(dirname "$0")"
+
+DRY=0
+if [ "${1:-}" = "--dry-run" ] || [ "${1:-}" = "-n" ]; then
+  DRY=1
+fi
+
+GIT_REMOTES=(realpkuasule xiaozhiaixue)
+SSH_TARGETS=(
+  "mbp:/Users/morgan/.agents/skills/dsh-model-routing/"
+  "m2:/Users/gitlab/.agents/skills/dsh-model-routing/"
+)
+RSYNC_OPTS=(-a --delete --exclude='.DS_Store')
+
+# ── 0. 工作区状态提示 ──────────────────────────────────────────────
+DIRTY=$(git status --porcelain | wc -l | tr -d ' ')
+if [ "$DIRTY" -gt 0 ]; then
+  echo "⚠️  工作区有 $DIRTY 个未提交改动：git push 只推送已提交内容，rsync 会把工作区现状原样同步。"
+  echo "   如需让远端仓库也拿到这些改动，请先 git add -A && git commit。"
+fi
+
+# ── 1. 推送 GitHub 远端 ────────────────────────────────────────────
+for remote in "${GIT_REMOTES[@]}"; do
+  if ! git remote get-url "$remote" >/dev/null 2>&1; then
+    echo "✗ 远端 $remote 未配置，跳过。"
+    continue
+  fi
+  if [ "$DRY" = 1 ]; then
+    echo "[dry-run] git push $remote main"
+  else
+    echo "== push $remote =="
+    git push "$remote" main
+  fi
+done
+
+# ── 2. 本机软链（缺失时重建） ─────────────────────────────────────
+mkdir -p ~/.agents/skills
+if [ -e ~/.agents/skills/dsh-model-routing ]; then
+  echo "== 本机软链已存在：$(readlink ~/.agents/skills/dsh-model-routing 2>/dev/null || echo '(非软链目录)') =="
+else
+  if [ "$DRY" = 1 ]; then
+    echo "[dry-run] ln -sfn $PWD ~/.agents/skills/dsh-model-routing"
+  else
+    ln -sfn "$PWD" ~/.agents/skills/dsh-model-routing
+    echo "== 本机软链已创建 → $PWD =="
+  fi
+fi
+
+# ── 3. rsync 到远程机器 ────────────────────────────────────────────
+for target in "${SSH_TARGETS[@]}"; do
+  if [ "$DRY" = 1 ]; then
+    echo "[dry-run] rsync ${RSYNC_OPTS[*]} $PWD/ $target"
+  else
+    echo "== rsync → $target =="
+    rsync "${RSYNC_OPTS[@]}" "$PWD/" "$target"
+  fi
+done
+
+echo
+if [ "$DRY" = 1 ]; then
+  echo "（dry-run 完成，未做任何修改）"
+else
+  echo "✅ 全部同步完成：GitHub ×${#GIT_REMOTES[@]}、本机软链、远程机器 ×${#SSH_TARGETS[@]}"
+fi
