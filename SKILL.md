@@ -11,6 +11,8 @@ description: DeepSeek Harness 模型与模式选路 Skill。启用本技能的�
 
 **可靠路径（推荐）：`routing-standard` 预设。** 该用户预设（「标准模式·自动选路」，本仓库 `presets/routing-standard/`）在 persona 里注入最高优先级指令：第一条用户消息带任务 → 必须在本轮先调用本 skill 执行选路；闲聊/反问 → 静默跳过。用它开会话，第一轮必然触发。
 
+自 v2 起该预设还带**工具级硬守卫**（`presets/routing-standard/plugins/routing-gate.mjs`）：在本会话加载本 skill 之前，除 `skill(dsh-model-routing)` 外的所有工具调用都会被拒绝并把原因反馈给模型——触发从「建议」升级为「确定性约束」。子代理（delegationDepth>0）不拦截。2026-08 实测：新会话首工具调用即本 skill，随后输出完整选路报告再执行任务。
+
 **尽力而为路径：skill 目录 description。** 在其它预设（标准/PTC/创造）中，本 skill 的 description 要求"收到第一条用户消息时必须立即加载"——但这是给模型的建议，模型可能忽略（已实测）。description 主要保障中途显式触发。
 
 具体行为：

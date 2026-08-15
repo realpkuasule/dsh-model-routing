@@ -32,6 +32,15 @@
       2. If the message carries a task, BEFORE taking any other task action, call the `skill` tool with name `dsh-model-routing`, follow its routing rules, and emit its routing report (Chinese, structured). Then continue with the task as instructed.
       3. The user may also trigger routing mid-session by asking which model or mode to use, or by saying "帮我选路" / /route / /model-route. Run the same routing flow then.
       4. Never claim the session can switch its own model or mode mid-run; routing results apply to new sessions, the agent-default-model setting, or workflow fan-out, exactly as the skill says.
+      5. This is not advice: a tool-level guard (the `routing-gate` row in this composition) rejects every tool call except `skill` with name `dsh-model-routing` until routing has run once in this session. On a task-bearing first message your FIRST tool call must therefore be that skill call — there is no way around it. If the first message is small talk with no tool use, the guard stays silent.
+
+# ── routing gate ────────────────────────────────────────────────────────────
+
+# 工具级硬约束：在模型加载 dsh-model-routing 之前，拒绝本会话除该 skill
+# 调用外的所有工具，把「首条任务消息自动选路」从 persona 建议升级为确定性
+# 行为。子代理（delegationDepth>0）不拦截。该文件随预设目录一起分发。
+- id: routing-gate
+  name: './plugins/routing-gate.mjs'
 
 - id: agent-instructions
   name: '@deepseek-ai/dsh-agent-instructions'
@@ -149,6 +158,28 @@
   config:
     - id: compaction-basic
       name: '@deepseek-ai/dsh-compaction-basic'
+      config:
+        auto: true
+        # 提前压缩：上下文估计用到 65% 就触发（shipped 默认 80%），
+        # 给大轮次 + 大输出（含思考 token）留出余量。
+        thresholdRatio: 0.65
+        # 压缩时保留最近 15% 的原文不动，更早的内容折叠成摘要。
+        retainRatio: 0.15
+        # 摘要生成的输出上限。
+        maxTokens: 8192
+        # 一次压力压缩最多重试 2 次，直到收敛到阈值以下。
+        compactionRetries: 2
+        # 请求真正超窗（CONTEXT_WINDOW_EXCEEDED）后自动压缩重试 3 次
+        # （shipped 默认 1 次），兜底大轮次顶爆。
+        maxOverflowRetries: 3
+        # deepseek 主力路由单独收紧到 60%：思考密集型轮次更早压缩。
+        modelPolicies:
+          - provider: deepseek-official
+            model: deepseek-v4-flash
+            thresholdRatio: 0.6
+          - provider: deepseek-official
+            model: deepseek-v4-pro
+            thresholdRatio: 0.6
 
     - id: command-compact
       name: '@deepseek-ai/dsh-command-compact'
