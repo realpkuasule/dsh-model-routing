@@ -10,9 +10,19 @@ model-routing/
 ├── plugin-route-model.js  # 动态 Cordis 插件源码（Host 半身，随用随启）
 ├── presets/
 │   └── routing-standard/  # 用户预设「标准模式·自动选路」：persona 强制首轮选路
+├── docs/
+│   └── dsh-plugin.md      # Topic：插件实现与官方 deepseek-harness 规范的对照
 ├── sync-skills            # 一键同步（GitHub ×2 + mbp/m2）
 └── README.md              # 本文件
 ```
+
+## 文档主题（Topics）
+
+| Topic | 文件 | 内容 |
+| --- | --- | --- |
+| dsh-model-routing | `SKILL.md` | 选路规则、判定矩阵、输出模板、写入默认设置、工作流分派 |
+| dsh-plugin | `docs/dsh-plugin.md` | 动态插件实现与官方 deepseek-harness 插件规范的逐条对照 |
+| routing-standard preset | `presets/README.md` | 用户预设的安装、行为与修改方法 |
 
 ## 安装（全局可用）
 

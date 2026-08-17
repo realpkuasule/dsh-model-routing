@@ -23,10 +23,7 @@ return {
     const statusTool = harness.defineTool({
       name: 'route_default_model_status',
       description: '读取 DeepSeek Harness 当前的默认模型选择（provider / model / reasoningEffort）。只读，不修改任何设置。',
-      parameters: {
-        type: 'object',
-        properties: {},
-      },
+      parameters: {},
       output: {
         schema: {
           type: 'object',
@@ -49,24 +46,22 @@ return {
     const setTool = harness.defineTool({
       name: 'route_default_model',
       description: '预览或写入 DeepSeek Harness 的默认模型设置（agent-default-model）。影响之后新建的会话，不改变当前会话。默认 dryRun=true 只预览；用户确认后传 dryRun:false 真正写入。',
+      // 官方 ParameterSchemaSpec DSL（docs/cookbook/adding-a-tool.md）：属性级 required: true
       parameters: {
-        type: 'object',
-        properties: {
-          model: {
-            type: 'string',
-            enum: ['deepseek-v4-pro', 'deepseek-v4-flash'],
-            description: '目标默认模型 ID',
-          },
-          reasoningEffort: {
-            type: 'string',
-            description: '可选推理强度（如 low / medium / high / max）；省略则沿用当前值',
-          },
-          dryRun: {
-            type: 'boolean',
-            description: 'true 只预览不写入（默认 true）；false 真正写入',
-          },
+        model: {
+          type: 'string',
+          required: true,
+          enum: ['deepseek-v4-pro', 'deepseek-v4-flash'],
+          description: '目标默认模型 ID',
         },
-        required: ['model'],
+        reasoningEffort: {
+          type: 'string',
+          description: '可选推理强度（如 low / medium / high / max）；省略则沿用当前值',
+        },
+        dryRun: {
+          type: 'boolean',
+          description: 'true 只预览不写入（默认 true）；false 真正写入',
+        },
       },
       output: {
         schema: {
@@ -113,7 +108,9 @@ return {
           return [{ type: 'text', text }]
         },
       },
-      execute: async (args) => {
+      // 官方 execute 契约（adding-a-tool.md）：尊重 exec.signal；本工具无长任务，仅做前置中止检查
+      execute: async (args, exec) => {
+        if (exec.signal.aborted) throw new Error('route_default_model aborted')
         const previous = cleanSelection(modelService.currentSelection())
         const next = {
           provider: previous.provider,
