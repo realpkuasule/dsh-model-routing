@@ -20,7 +20,12 @@ if [ "${1:-}" = "--dry-run" ] || [ "${1:-}" = "-n" ]; then
   DRY=1
 fi
 
-GIT_REMOTES=(realpkuasule xiaozhiaixue)
+# 双推已由 git pushurl 配置保证（本仓库 .git/config）：
+#   remote.realpkuasule.pushurl = [realpkuasule, xiaozhiaixue]（realpkuasule 优先）
+#   remote.xiaozhiaixue.pushurl = [xiaozhiaixue, realpkuasule]
+# 因此这里只显式推主仓 realpkuasule，git 会自动双推；不要把 xiaozhiaixue
+# 加回本列表，否则每个远端会被重复推两次。
+GIT_REMOTES=(realpkuasule)
 SKILL_TARGETS=(
   "mbp:/Users/morgan/.agents/skills/dsh-model-routing/"
   "m2:/Users/gitlab/.agents/skills/dsh-model-routing/"

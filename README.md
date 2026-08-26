@@ -59,11 +59,11 @@ git remote add origin <你的仓库地址>
 git push -u origin main
 ```
 
-## 一键同步（GitHub + mbp + m2）
+## 一键同步（GitHub 双推 + mbp + m2）
 
 仓库自带 `sync-skills` 脚本，一次执行完成：
 
-1. 推送到 GitHub 两个远端（`realpkuasule` / `xiaozhiaixue`）
+1. 推送到 GitHub（**双推**：`realpkuasule` 优先 + `xiaozhiaixue`，由 pushurl 配置保证）
 2. 确保本机 `~/.agents/skills/dsh-model-routing` 软链存在
 3. rsync 到 `mbp`（/Users/morgan）与 `m2`（/Users/gitlab）的 `~/.agents/skills/dsh-model-routing`
 
@@ -73,5 +73,15 @@ git push -u origin main
 ```
 
 - 全程走 SSH（`git@github.com` + 本机 `mpm_key`），不落凭据
+- **双推机制**（`git push` / `git push realpkuasule` / `git push xiaozhiaixue` 均自动双推、realpkuasule 优先）：在 `.git/config` 里为两个 remote 各配两条 pushurl（自身在前、对方在后）。新机器复现：
+
+  ```bash
+  git remote set-url --add --push realpkuasule git@github.com:realpkuasule/dsh-model-routing.git
+  git remote set-url --add --push realpkuasule git@github.com:xiaozhiaixue/dsh-model-routing.git
+  git remote set-url --add --push xiaozhiaixue git@github.com:xiaozhiaixue/dsh-model-routing.git
+  git remote set-url --add --push xiaozhiaixue git@github.com:realpkuasule/dsh-model-routing.git
+  git branch --set-upstream-to=realpkuasule/main main
+  ```
+
 - 有未提交改动时会先提示：git push 只推送已提交内容，rsync 则同步工作区现状
 - 远端机器路径/账号变了，改脚本顶部的 `SSH_TARGETS` 数组即可
