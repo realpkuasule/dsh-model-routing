@@ -1,0 +1,39 @@
+{
+  "schema": "dsh-layout/1",
+  "profile": "custom",
+  "name": "model-routing",
+  "created": "2026-11-13T16:18:59+09:00",
+  "roles": {
+    "docs": "presets",
+    "tools": "tools"
+  },
+  "required_root": [
+    "README.md",
+    "AGENTS.md",
+    ".gitignore",
+    "TASK.json",
+    "CHANGELOG.jsonl",
+    ".dsh-layout.json"
+  ],
+  "root_files": [
+    "SKILL.md",
+    "plugin-route-model.js",
+    "sync-skills"
+  ],
+  "dir_readmes": [],
+  "tracking": {
+    "deliverables_mode": "tracked",
+    "ignore_globs": [
+      "node_modules/",
+      ".venv/",
+      "dist/",
+      "build/",
+      "out/",
+      "coverage/",
+      ".next/",
+      "target/",
+      ".pytest_cache/",
+      "__pycache__/"
+    ]
+  }
+}
